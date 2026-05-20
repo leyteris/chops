@@ -16,6 +16,9 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
     case pi
     case antigravity
     case claudeDesktop
+    case wukong
+    case qoder
+    case qoderwork
     case custom
 
     var id: String { rawValue }
@@ -47,6 +50,9 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .agents: "Global"
         case .antigravity: "Antigravity"
         case .claudeDesktop: "Claude Desktop"
+        case .wukong: "Wukong"
+        case .qoder: "Qoder"
+        case .qoderwork: "QoderWork"
         case .custom: "Custom"
         }
     }
@@ -69,6 +75,9 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .agents: "globe"
         case .antigravity: "arrow.up.circle"
         case .claudeDesktop: "desktopcomputer"
+        case .wukong: "cloud.fill"
+        case .qoder: "chevron.left.forwardslash.chevron.right"
+        case .qoderwork: "hammer.fill"
         case .custom: "folder"
         }
     }
@@ -86,6 +95,9 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .antigravity: "tool-antigravity"
         case .claudeDesktop: "tool-claude"
         case .opencode: "tool-opencode"
+        case .wukong: "tool-wukong"
+        case .qoder: "tool-qoder"
+        case .qoderwork: "tool-qoderwork"
         default: nil
         }
     }
@@ -107,6 +119,9 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .agents: .mint
         case .antigravity: .red
         case .claudeDesktop: .orange
+        case .wukong: .yellow
+        case .qoder: .cyan
+        case .qoderwork: .purple
         case .custom: .gray
         }
     }
@@ -117,6 +132,7 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .claude: return ["\(home)/.claude/agents"]
         case .cursor: return ["\(home)/.cursor/agents"]
         case .codex: return ["\(home)/.codex/agents"]
+        case .qoder: return ["\(home)/.qoder/agents"]
         default: return []
         }
     }
@@ -179,6 +195,24 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .agents: return ["\(home)/.agents/skills"]
         case .antigravity: return ["\(home)/.gemini/antigravity/skills"]
         case .claudeDesktop: return []
+        case .wukong:
+            var paths: [String] = []
+            let realRoot = URL(fileURLWithPath: "\(home)/.real/users")
+            if let userDirs = try? FileManager.default.contentsOfDirectory(
+                at: realRoot,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles]
+            ) {
+                for userDir in userDirs {
+                    let skillsPath = userDir.appendingPathComponent(".skills")
+                    if FileManager.default.fileExists(atPath: skillsPath.path) {
+                        paths.append(skillsPath.path)
+                    }
+                }
+            }
+            return paths
+        case .qoder: return ["\(home)/.qoder/skills"]
+        case .qoderwork: return ["\(home)/.qoderwork/skills"]
         case .custom: return []
         }
     }
@@ -254,6 +288,16 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .hermes:
             return fm.fileExists(atPath: "\(home)/.hermes")
                 || Self.cliBinaryExists("hermes")
+        case .wukong:
+            return Self.appBundleExists("Wukong")
+                || fm.fileExists(atPath: "\(home)/.real/users")
+        case .qoder:
+            return fm.fileExists(atPath: "\(home)/.qoder/settings.json")
+                || fm.fileExists(atPath: "\(home)/.qoder/skills")
+                || Self.cliBinaryExists("qodercli")
+        case .qoderwork:
+            return Self.appBundleExists("QoderWork")
+                || fm.fileExists(atPath: "\(home)/.qoderwork/skills")
         case .aider, .custom:
             return true
         }

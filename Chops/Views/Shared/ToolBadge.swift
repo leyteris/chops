@@ -51,6 +51,9 @@ extension ToolSource {
         case .agents: "AG"
         case .antigravity: "AV"
         case .claudeDesktop: "CD"
+        case .wukong: "WK"
+        case .qoder: "QD"
+        case .qoderwork: "QW"
         case .custom: "?"
         }
     }

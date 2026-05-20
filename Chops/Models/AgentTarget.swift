@@ -177,6 +177,26 @@ struct AgentTarget: Identifiable, Hashable {
                 appBundleName: "Warp",
                 cliBinaryName: nil
             ),
+            AgentTarget(
+                id: "qoder",
+                displayName: "Qoder",
+                globalSkillsDir: "\(home)/.qoder/skills",
+                skillFileName: "SKILL.md",
+                evidencePaths: [
+                    "\(home)/.qoder/settings.json",
+                ],
+                appBundleName: nil,
+                cliBinaryName: "qodercli"
+            ),
+            AgentTarget(
+                id: "qoderwork",
+                displayName: "QoderWork",
+                globalSkillsDir: "\(home)/.qoderwork/skills",
+                skillFileName: "SKILL.md",
+                evidencePaths: [],
+                appBundleName: "QoderWork",
+                cliBinaryName: nil
+            ),
         ]
     }()
 }
