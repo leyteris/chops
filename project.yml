@@ -31,6 +31,10 @@ targets:
         excludes:
           - "*.entitlements"
           - Info.plist
+          - ChopsIcon.icon
+      - path: Chops/ChopsIcon.icon
+        type: file
+        buildPhase: resources
     dependencies:
       - package: Sparkle
       - package: Highlightr
