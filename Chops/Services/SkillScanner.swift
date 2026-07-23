@@ -63,6 +63,10 @@ final class SkillScanner {
         (".opencode/skills", .opencode, .skill),
         (".hermes/skills", .hermes, .skill),
         (".qoder/skills", .qoder, .skill),
+        (".qoder-cn/skills", .qoder, .skill),
+        (".qoderwork/skills", .qoderwork, .skill),
+        (".qoderworkcn/skills", .qoderwork, .skill),
+        (".workbuddy/skills", .workbuddy, .skill),
     ]
 
     func scanAll() {

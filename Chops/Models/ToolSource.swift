@@ -19,6 +19,7 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
     case wukong
     case qoder
     case qoderwork
+    case workbuddy
     case custom
 
     var id: String { rawValue }
@@ -53,6 +54,7 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .wukong: "Wukong"
         case .qoder: "Qoder"
         case .qoderwork: "QoderWork"
+        case .workbuddy: "WorkBuddy"
         case .custom: "Custom"
         }
     }
@@ -78,6 +80,7 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .wukong: "cloud.fill"
         case .qoder: "chevron.left.forwardslash.chevron.right"
         case .qoderwork: "hammer.fill"
+        case .workbuddy: "brain"
         case .custom: "folder"
         }
     }
@@ -98,6 +101,7 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .wukong: "tool-wukong"
         case .qoder: "tool-qoder"
         case .qoderwork: "tool-qoderwork"
+        case .workbuddy: "tool-workbuddy"
         default: nil
         }
     }
@@ -122,6 +126,7 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .wukong: .yellow
         case .qoder: .cyan
         case .qoderwork: .purple
+        case .workbuddy: Color(hue: 0.62, saturation: 0.55, brightness: 0.95)
         case .custom: .gray
         }
     }
@@ -211,8 +216,9 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
                 }
             }
             return paths
-        case .qoder: return ["\(home)/.qoder/skills"]
-        case .qoderwork: return ["\(home)/.qoderwork/skills"]
+        case .qoder: return ["\(home)/.qoder/skills", "\(home)/.qoder-cn/skills"]
+        case .qoderwork: return ["\(home)/.qoderwork/skills", "\(home)/.qoderworkcn/skills"]
+        case .workbuddy: return ["\(home)/.workbuddy/skills"]
         case .custom: return []
         }
     }
@@ -294,10 +300,15 @@ enum ToolSource: String, Codable, CaseIterable, Identifiable {
         case .qoder:
             return fm.fileExists(atPath: "\(home)/.qoder/settings.json")
                 || fm.fileExists(atPath: "\(home)/.qoder/skills")
+                || fm.fileExists(atPath: "\(home)/.qoder-cn/skills")
                 || Self.cliBinaryExists("qodercli")
         case .qoderwork:
             return Self.appBundleExists("QoderWork")
                 || fm.fileExists(atPath: "\(home)/.qoderwork/skills")
+                || fm.fileExists(atPath: "\(home)/.qoderworkcn/skills")
+        case .workbuddy:
+            return fm.fileExists(atPath: "\(home)/.workbuddy")
+                || Self.appBundleExists("WorkBuddy")
         case .aider, .custom:
             return true
         }

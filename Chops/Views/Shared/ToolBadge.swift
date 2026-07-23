@@ -54,6 +54,7 @@ extension ToolSource {
         case .wukong: "WK"
         case .qoder: "QD"
         case .qoderwork: "QW"
+        case .workbuddy: "WB"
         case .custom: "?"
         }
     }

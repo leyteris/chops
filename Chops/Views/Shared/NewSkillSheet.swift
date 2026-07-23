@@ -14,7 +14,7 @@ struct NewSkillSheet: View {
     private var creatableTools: [ToolSource] {
         switch itemKind {
         case .skill:
-            return [.agents, .amp, .antigravity, .claude, .codex, .cursor, .opencode, .pi, .qoder, .qoderwork]
+            return [.agents, .amp, .antigravity, .claude, .codex, .cursor, .opencode, .pi, .qoder, .qoderwork, .workbuddy]
         case .agent:
             return ToolSource.allCases.filter { !$0.globalAgentPaths.isEmpty }
         case .rule:
