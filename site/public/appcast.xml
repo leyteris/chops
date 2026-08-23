@@ -3,6 +3,20 @@
   <channel>
     <title>Chops</title>
     <item>
+      <title>Version 1.16.0</title>
+      <sparkle:version>1.16.0</sparkle:version>
+      <sparkle:shortVersionString>1.16.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <pubDate>Sun, 23 Aug 2026 19:49:53 +0000</pubDate>
+      <description><![CDATA[<ul><li>Browse Skills now opens to a Trending list of popular skills</li><li>Faster, broader skill search with an Official-only filter</li><li>Agents and rules now live in one unified Skills list, with a Discovery row to browse the registry</li><li>New ⌘K command palette to jump to any tool's library, browse the registry, or create a skill/agent/rule</li><li>Added keyboard shortcuts: ⌘B to toggle the sidebar and ⌘⇧L to jump to Skills</li></ul>]]></description>
+      <enclosure
+        url="https://github.com/Shpigford/chops/releases/download/v1.16.0/Chops.dmg"
+        sparkle:edSignature="LS5SWh5XvBvrFZ8IG+RqAKjUHfygf01EYRbVz+L0rX3mO2/+2VigKDMHIz1hAKkwpwRj5VAz5k6j2u2ip+zFAA=="
+        length="5263721"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>Version 1.15.0</title>
       <sparkle:version>1.15.0</sparkle:version>
       <sparkle:shortVersionString>1.15.0</sparkle:shortVersionString>
