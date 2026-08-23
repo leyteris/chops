@@ -91,6 +91,14 @@ create_chops_dmg() {
   mkdir -p "/Volumes/Chops/.background"
   cp scripts/dmg-background.png "/Volumes/Chops/.background/background.png"
 
+  # hdiutil attach returns before Finder registers the volume; wait for it
+  for _ in $(seq 1 30); do
+    if [ "$(osascript -e 'tell application "Finder" to exists disk "Chops"')" = "true" ]; then
+      break
+    fi
+    sleep 1
+  done
+
   osascript <<'APPLESCRIPT'
 tell application "Finder"
   tell disk "Chops"
