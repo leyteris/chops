@@ -2,8 +2,11 @@
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-08-23
+
 - Browse Skills now opens to a Trending list of popular skills
 - Faster, broader skill search with an Official-only filter
+- Agents and rules now live in one unified Skills list, with a Discovery row to browse the registry
 - New ⌘K command palette to jump to any tool's library, browse the registry, or create a skill/agent/rule
 - Added keyboard shortcuts: ⌘B to toggle the sidebar and ⌘⇧L to jump to Skills
 
