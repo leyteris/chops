@@ -2,12 +2,19 @@ import Foundation
 
 @Observable
 final class SkillRegistry {
+    /// One instance for the app so the trending and GitHub caches last the session,
+    /// not just a single sheet presentation.
+    static let shared = SkillRegistry()
+
     var isSearching = false
     var searchError: String?
 
     // Cache repo metadata to avoid repeated GitHub API calls
     private var treeCache: [String: [String]] = [:] // source@branch -> [SKILL.md paths]
     private var branchCache: [String: String] = [:] // source -> default branch
+
+    // Popular/trending skills, scraped from skills.sh. Cached in memory for the session.
+    private var trendingCache: [RegistrySkill]?
 
     // MARK: - Search
 
@@ -17,11 +24,16 @@ final class SkillRegistry {
     }
 
     struct RegistrySkill: Identifiable, Codable {
-        let id: String
         let skillId: String
         let name: String
         let installs: Int
         let source: String
+        let isOfficial: Bool?
+
+        // Derived rather than decoded: the search API sends an `id` field equal to
+        // "<source>/<skillId>", but the trending payload omits it. Computing it keeps
+        // both sources Identifiable without a fragile optional.
+        var id: String { "\(source)/\(skillId)" }
 
         var formattedInstalls: String {
             if installs >= 1_000_000 {
@@ -46,6 +58,66 @@ final class SkillRegistry {
 
         let decoded = try JSONDecoder().decode(SearchResponse.self, from: data)
         return decoded.skills
+    }
+
+    // MARK: - Trending / Browse
+
+    /// Fetches the most-installed skills by scraping skills.sh's server-rendered
+    /// trending page (no public JSON API exists for this). The result — ~600 skills
+    /// ranked by install count — is cached for the session and powers instant local
+    /// browse + filtering, which is both faster and broader than the fuzzy search API.
+    func fetchTrending() async throws -> [RegistrySkill] {
+        if let cached = trendingCache { return cached }
+
+        var request = URLRequest(url: URL(string: "https://www.skills.sh/trending")!)
+        // Identify ourselves honestly since we're reading their HTML rather than a JSON API.
+        request.setValue(
+            "Chops/macOS (+https://github.com/Shpigford/chops)",
+            forHTTPHeaderField: "User-Agent"
+        )
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200,
+              let html = String(data: data, encoding: .utf8) else {
+            throw RegistryError.trendingFailed
+        }
+
+        let skills = Self.parseTrending(html: html)
+        guard !skills.isEmpty else { throw RegistryError.trendingFailed }
+        trendingCache = skills
+        return skills
+    }
+
+    /// Extracts skill objects from the Next.js RSC payload embedded in the trending HTML.
+    /// The payload lives inside JS string literals, so JSON quotes arrive as `\"`; we
+    /// unescape, then pull out every flat `{…"skillId":…}` object and hand it to
+    /// JSONDecoder, which tolerates extra keys and any key order. Page order is
+    /// install-count descending, which we preserve.
+    static func parseTrending(html: String) -> [RegistrySkill] {
+        let unescaped = html.replacingOccurrences(of: "\\\"", with: "\"")
+        let pattern = #/\{[^{}]*"skillId":[^{}]*\}/#
+
+        let decoder = JSONDecoder()
+        var seen = Set<String>()
+        var result: [RegistrySkill] = []
+        for match in unescaped.matches(of: pattern) {
+            let json = String(match.output)
+            guard let skill = try? decoder.decode(RegistrySkill.self, from: Data(json.utf8)) else { continue }
+            if seen.insert(skill.id).inserted {
+                result.append(skill)
+            }
+        }
+        return result
+    }
+
+    /// Case-insensitive substring match across name, skillId, and source.
+    static func filter(_ skills: [RegistrySkill], query: String) -> [RegistrySkill] {
+        guard !query.isEmpty else { return skills }
+        return skills.filter {
+            $0.name.localizedCaseInsensitiveContains(query)
+                || $0.skillId.localizedCaseInsensitiveContains(query)
+                || $0.source.localizedCaseInsensitiveContains(query)
+        }
     }
 
     // MARK: - Content Resolution
@@ -238,6 +310,7 @@ final class SkillRegistry {
 
     enum RegistryError: LocalizedError {
         case searchFailed
+        case trendingFailed
         case treeFetchFailed
         case rateLimited
         case skillNotFound
@@ -247,6 +320,7 @@ final class SkillRegistry {
         var errorDescription: String? {
             switch self {
             case .searchFailed: "Search request failed"
+            case .trendingFailed: "Could not load trending skills from skills.sh"
             case .treeFetchFailed: "Could not fetch repository contents"
             case .rateLimited: "GitHub API rate limit reached — try again in a few minutes"
             case .skillNotFound: "File not found in repository"

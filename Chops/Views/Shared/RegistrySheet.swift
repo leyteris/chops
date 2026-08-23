@@ -2,9 +2,13 @@ import SwiftUI
 
 struct RegistrySheet: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var registry = SkillRegistry()
+    private let registry = SkillRegistry.shared
     @State private var searchText = ""
     @State private var results: [SkillRegistry.RegistrySkill] = []
+    @State private var trending: [SkillRegistry.RegistrySkill] = []
+    @State private var isLoadingTrending = false
+    @State private var trendingError: String?
+    @State private var officialOnly = false
     @State private var selectedSkill: SkillRegistry.RegistrySkill?
     @State private var skillContent: String?
     @State private var selectedAgents: Set<String> = []
@@ -18,6 +22,23 @@ struct RegistrySheet: View {
 
     private var installedAgents: [AgentTarget] {
         AgentTarget.installed
+    }
+
+    private var isBrowsing: Bool { searchText.count < 2 }
+
+    /// What the list renders: trending when idle, locally-filtered trending plus any
+    /// long-tail API hits when searching. Local matches come first (they're the popular
+    /// ones), API extras fill in skills that aren't in the trending set. The Official
+    /// filter only applies while browsing: the search API doesn't report `isOfficial`,
+    /// so filtering search results would silently drop every long-tail hit.
+    private var visibleSkills: [SkillRegistry.RegistrySkill] {
+        if isBrowsing {
+            return officialOnly ? trending.filter { $0.isOfficial == true } : trending
+        }
+        let local = SkillRegistry.filter(trending, query: searchText)
+        let localIDs = Set(local.map(\.id))
+        let extra = results.filter { !localIDs.contains($0.id) }
+        return local + extra
     }
 
     var body: some View {
@@ -64,9 +85,10 @@ struct RegistrySheet: View {
             }
         }
         .frame(width: 560, height: 500)
-        .onAppear {
+        .task {
             // Pre-select all installed agents
             selectedAgents = Set(installedAgents.map(\.id))
+            await loadTrending()
         }
         .onDisappear {
             searchTask?.cancel()
@@ -98,28 +120,58 @@ struct RegistrySheet: View {
                 debounceSearch(query: newValue)
             }
 
+            // Browse header: section label + Official filter toggle
+            HStack {
+                Text(isBrowsing ? "Trending" : "Results")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if isBrowsing {
+                    Toggle("Official only", isOn: $officialOnly)
+                        .toggleStyle(.checkbox)
+                        .font(.caption)
+                        .controlSize(.small)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 8)
+
             Divider()
 
             // Results
-            if results.isEmpty && (isSearching || searchText.count < 2) {
+            if isBrowsing && isLoadingTrending {
+                Spacer()
+                ProgressView("Loading popular skills…")
+                Spacer()
+            } else if isBrowsing, trending.isEmpty, let trendingError {
                 ContentUnavailableView {
-                    Label("Search the Skills Registry", systemImage: "globe")
+                    Label("Trending Unavailable", systemImage: "exclamationmark.triangle")
                 } description: {
-                    Text("Find and install skills from the open agent skills ecosystem.")
+                    Text(trendingError)
+                } actions: {
+                    Button("Retry") { Task { await loadTrending() } }
                 }
                 .frame(maxHeight: .infinity)
-            } else if results.isEmpty && !isSearching && searchText.count >= 2 {
+            } else if visibleSkills.isEmpty && !isSearching {
                 ContentUnavailableView.search(text: searchText)
                     .frame(maxHeight: .infinity)
             } else {
-                List(results) { skill in
+                List(visibleSkills) { skill in
                     Button {
                         selectSkill(skill)
                     } label: {
                         HStack {
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(skill.name)
-                                    .fontWeight(.medium)
+                                HStack(spacing: 5) {
+                                    Text(skill.name)
+                                        .fontWeight(.medium)
+                                    if skill.isOfficial == true {
+                                        Image(systemName: "checkmark.seal.fill")
+                                            .font(.caption2)
+                                            .foregroundStyle(.blue)
+                                    }
+                                }
                                 Text(skill.source)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -279,6 +331,18 @@ struct RegistrySheet: View {
     }
 
     // MARK: - Actions
+
+    private func loadTrending() async {
+        guard trending.isEmpty else { return }
+        isLoadingTrending = true
+        trendingError = nil
+        do {
+            trending = try await registry.fetchTrending()
+        } catch {
+            trendingError = error.localizedDescription
+        }
+        isLoadingTrending = false
+    }
 
     private func debounceSearch(query: String) {
         searchTask?.cancel()

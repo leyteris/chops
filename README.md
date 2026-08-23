@@ -28,6 +28,7 @@ One macOS app to discover, organize, and edit coding agent skills and agents acr
 - **Full-text search** — Search across name, description, and content
 - **Create new skills & agents** — Generates correct boilerplate per tool
 - **Remote servers** — Connect to servers running [OpenClaw](https://openclaw.ai), [Hermes](https://github.com/NousResearch/hermes-agent), or other layouts to discover, browse, and install skills
+- **Skills Discovery** — Browse, search, and install skills directly from the [skills.sh registry](https://skills.sh)
 
 ## Prerequisites
 
